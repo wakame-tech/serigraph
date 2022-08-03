@@ -1,5 +1,6 @@
 use petgraph::Graph;
 use serde::{Deserialize, Serialize};
+use serigraph::{outgoing_sorter::OutGoingCycleDecomposer, serialize::serialize};
 use std::{
     collections::{HashMap, HashSet},
     fmt::Display,
@@ -11,8 +12,6 @@ use std::path::Path;
 
 use anyhow::Result;
 use clap::Parser;
-
-use crate::serialize::serialize_graph;
 
 #[derive(Parser, Debug)]
 pub struct Args {
@@ -54,15 +53,15 @@ pub fn write_as_md(notes: &[&Note], path: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn cli() -> Result<()> {
+fn main() -> Result<()> {
     let args = Args::parse();
     let path = Path::new(&args.input_path);
     let content = std::fs::read_to_string(path)?;
     let notes: Vec<Note> = serde_json::from_str(&content)?;
 
     let mut graph = into_graph(&notes);
-    let sorter: crate::decomp_cycles::ByOutGoingEdgeCountSorter = Default::default();
-    let notes = serialize_graph(&mut graph, &sorter)?;
+    let sorter: OutGoingCycleDecomposer = Default::default();
+    let notes = serialize(&mut graph, &sorter)?;
     let size = if args.note_limit == 0 {
         notes.len() - 1
     } else {
