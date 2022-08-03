@@ -40,7 +40,7 @@ impl Display for Note {
     }
 }
 
-pub fn write_as_md(notes: &[&Note], path: &Path) -> Result<()> {
+fn write_as_md(notes: &[&Note], path: &Path) -> Result<()> {
     let mut f = OpenOptions::new()
         .create(true)
         .truncate(true)
@@ -53,27 +53,7 @@ pub fn write_as_md(notes: &[&Note], path: &Path) -> Result<()> {
     Ok(())
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
-    let path = Path::new(&args.input_path);
-    let content = std::fs::read_to_string(path)?;
-    let notes: Vec<Note> = serde_json::from_str(&content)?;
-
-    let mut graph = into_graph(&notes);
-    let sorter: OutGoingCycleDecomposer = Default::default();
-    let notes = serialize(&mut graph, &sorter)?;
-    let size = if args.note_limit == 0 {
-        notes.len() - 1
-    } else {
-        args.note_limit
-    };
-
-    let notes = notes[..=size].to_vec();
-    write_as_md(&notes, Path::new("./out.md"))?;
-    Ok(())
-}
-
-pub fn into_graph(notes: &[Note]) -> Graph<&Note, String> {
+fn into_graph(notes: &[Note]) -> Graph<&Note, String> {
     let mut graph: Graph<&Note, String> = Graph::new();
     let mut map = HashMap::<String, u32>::new();
 
@@ -98,4 +78,24 @@ pub fn into_graph(notes: &[Note]) -> Graph<&Note, String> {
         }
     }
     graph
+}
+
+fn main() -> Result<()> {
+    let args = Args::parse();
+    let path = Path::new(&args.input_path);
+    let content = std::fs::read_to_string(path)?;
+    let notes: Vec<Note> = serde_json::from_str(&content)?;
+
+    let mut graph = into_graph(&notes);
+    let sorter: OutGoingCycleDecomposer = Default::default();
+    let notes = serialize(&mut graph, &sorter)?;
+    let size = if args.note_limit == 0 {
+        notes.len() - 1
+    } else {
+        args.note_limit
+    };
+
+    let notes = notes[..=size].to_vec();
+    write_as_md(&notes, Path::new("./out.md"))?;
+    Ok(())
 }

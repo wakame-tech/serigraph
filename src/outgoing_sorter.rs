@@ -67,7 +67,6 @@ fn unlink_cycle<N, E>(graph: &mut Graph<N, E>, cycle_node_set: &HashSet<NodeInde
         return;
     }
 
-    // dbg_cycles(graph, &group.iter().cloned().collect::<Vec<_>>());
     let chain = sorted_cycle_by_outgoings(graph, cycle_node_set);
     let max_ref_node = chain
         .iter()
@@ -81,6 +80,7 @@ fn unlink_cycle<N, E>(graph: &mut Graph<N, E>, cycle_node_set: &HashSet<NodeInde
 
 impl<N, E> CycleDecomposer<N, E> for OutGoingCycleDecomposer {
     /// decompose cycles while there are cycles
+    // FIXME: improve
     fn decompose_cycles(&self, graph: &mut Graph<N, E>) {
         let mut count = 0usize;
         while count < self.limit {
