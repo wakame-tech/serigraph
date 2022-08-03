@@ -24,7 +24,7 @@ pub fn get_cycles<N, E>(graph: &Graph<N, E>) -> Vec<HashSet<NodeIndex>> {
 
 impl<N, E> CycleNodesSorter<N, E> for ByOutGoingEdgeCountSorter {
     fn sorted(&self, graph: &Graph<N, E>, group: &HashSet<NodeIndex>) -> Vec<NodeIndex> {
-        let mut curr = group.iter().nth(0).unwrap().clone();
+        let mut curr = *group.iter().next().unwrap();
         let mut visited: HashSet<NodeIndex<u32>> = HashSet::new();
         let mut chain: Vec<NodeIndex<u32>> = Vec::new();
         loop {
@@ -35,7 +35,7 @@ impl<N, E> CycleNodesSorter<N, E> for ByOutGoingEdgeCountSorter {
                 .collect::<HashSet<_>>();
             let neighbors = neighbors
                 .iter()
-                .filter(|i| group.contains(i) && !visited.contains(&i))
+                .filter(|i| group.contains(i) && !visited.contains(i))
                 .collect::<Vec<_>>();
             visited.insert(curr);
 
@@ -44,9 +44,7 @@ impl<N, E> CycleNodesSorter<N, E> for ByOutGoingEdgeCountSorter {
                 curr = **next_ni;
             } else {
                 let start_ni = graph
-                    .neighbors_directed(curr, Outgoing)
-                    .filter(|ni| group.contains(ni))
-                    .nth(0)
+                    .neighbors_directed(curr, Outgoing).find(|ni| group.contains(ni))
                     .expect("start node must be in the group");
                 let (index, _) = chain
                     .iter()
@@ -61,7 +59,7 @@ impl<N, E> CycleNodesSorter<N, E> for ByOutGoingEdgeCountSorter {
     fn unlink_cycle(&self, graph: &mut Graph<N, E>, cycle_node_set: &HashSet<NodeIndex>) {
         // unlink self-loops
         if cycle_node_set.len() == 1 {
-            let ni = cycle_node_set.iter().nth(0).unwrap();
+            let ni = cycle_node_set.iter().next().unwrap();
             let e = graph.find_edge(*ni, *ni).unwrap();
             graph.remove_edge(e);
             return;

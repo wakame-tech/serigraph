@@ -17,6 +17,7 @@ use crate::serialize::serialize_graph;
 #[derive(Parser, Debug)]
 pub struct Args {
     pub input_path: String,
+    pub note_limit: usize,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -46,8 +47,9 @@ pub fn write_as_md(notes: &[&Note], path: &Path) -> Result<()> {
         .truncate(true)
         .write(true)
         .open(path)?;
-    for note in notes {
-        f.write(format!("{}\n", note.content).as_bytes())?;
+    for (i, note) in notes.iter().enumerate() {
+        println!("[{}] {}", i, note.title);
+        f.write(format!("\n\n{}\n\n", note.content).as_bytes())?;
     }
     Ok(())
 }
@@ -61,6 +63,13 @@ pub fn cli() -> Result<()> {
     let mut graph = into_graph(&notes);
     let sorter: crate::decomp_cycles::ByOutGoingEdgeCountSorter = Default::default();
     let notes = serialize_graph(&mut graph, &sorter)?;
+    let size = if args.note_limit == 0 {
+        notes.len() - 1
+    } else {
+        args.note_limit
+    };
+
+    let notes = notes[..=size].to_vec();
     write_as_md(&notes, Path::new("./out.md"))?;
     Ok(())
 }
