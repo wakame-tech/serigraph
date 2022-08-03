@@ -5,7 +5,7 @@ a graph serializer
 use anyhow::Result;
 use petgraph::graph::NodeIndex;
 use petgraph::Graph;
-use serigraph::{outgoing_sorter::OutGoingSorter, serialize::serialize_graph};
+use serigraph::{outgoing_sorter::OutGoingCycleDecomposer, serialize::serialize};
 
 fn main() -> Result<()> {
     let mut graph = Graph::<i32, ()>::new();
@@ -16,9 +16,11 @@ fn main() -> Result<()> {
     for (a, b) in edges {
         graph.add_edge(NodeIndex::new(a), NodeIndex::new(b), ());
     }
-    let nodes = serialize_graph(&mut graph, &OutGoingSorter::default())?;
+    let nodes = serialize(&mut graph, &OutGoingCycleDecomposer::default())?;
     assert_eq!(nodes, vec![1, 3, 2, 0]);
     Ok(())
 }
-
 ```
+## cycle decomposition algorithm
+- `OutGoingcycleDecomposer` (naive)
+unlink the edge between the node with the largest degree of exit and its referenced node
