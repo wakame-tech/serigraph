@@ -21,6 +21,15 @@ fn main() -> Result<()> {
     Ok(())
 }
 ```
+
 ## cycle decomposition algorithm
-- `OutGoingcycleDecomposer` (naive)
-unlink the edge between the node with the largest degree of exit and its referenced node
+### `OutGoingCycleDecomposer` (naive)
+Unlink the edge between the node with the largest degree of exit and its referenced node.
+
+#### Example
+$(V, E) = (\{1, 2, 3, 4\}, \{(1, 2), (2, 3), (2, 4), (3, 1)\})$
+
+1. Find all cycles node set $\mathscr{C}$: $\mathscr{C} = \{\{1, 2, 3\}\}$
+2. At each cycle, get dependencies chain and count outgoing nodes in all node in a cycle $[1(1), 2(2), 3(1)]$
+3. Unlink the edge between the node with the highest outgoing order ($2$) and the referenced node for that node in the cycle ($1$)
+4. Perform topological sorting, gets $[1, 3, 2, 0]$

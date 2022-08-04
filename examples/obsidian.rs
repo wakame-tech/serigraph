@@ -1,6 +1,6 @@
 use petgraph::Graph;
 use serde::{Deserialize, Serialize};
-use serigraph::{outgoing_sorter::OutGoingCycleDecomposer, serialize::serialize};
+use serigraph::{outgoing_sorter::OutGoingCycleEliminator, serialize::serialize};
 use std::{
     cmp::min,
     collections::{HashMap, HashSet},
@@ -89,7 +89,7 @@ fn main() -> Result<()> {
     let notes: Vec<Note> = serde_json::from_str(&content)?;
 
     let mut graph = into_graph(&notes);
-    let sorter: OutGoingCycleDecomposer = Default::default();
+    let sorter: OutGoingCycleEliminator = Default::default();
     let notes = serialize(&mut graph, &sorter)?;
     let from = args.index_from;
     let to = min(args.index_to, notes.len());
