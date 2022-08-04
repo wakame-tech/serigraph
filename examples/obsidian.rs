@@ -2,6 +2,7 @@ use petgraph::Graph;
 use serde::{Deserialize, Serialize};
 use serigraph::{outgoing_sorter::OutGoingCycleDecomposer, serialize::serialize};
 use std::{
+    cmp::min,
     collections::{HashMap, HashSet},
     fmt::Display,
     fs::OpenOptions,
@@ -16,7 +17,8 @@ use clap::Parser;
 #[derive(Parser, Debug)]
 pub struct Args {
     pub input_path: String,
-    pub note_limit: usize,
+    pub index_from: usize,
+    pub index_to: usize,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -89,13 +91,10 @@ fn main() -> Result<()> {
     let mut graph = into_graph(&notes);
     let sorter: OutGoingCycleDecomposer = Default::default();
     let notes = serialize(&mut graph, &sorter)?;
-    let size = if args.note_limit == 0 {
-        notes.len() - 1
-    } else {
-        args.note_limit
-    };
+    let from = args.index_from;
+    let to = min(args.index_to, notes.len());
 
-    let notes = notes[..=size].to_vec();
+    let notes = notes[from..to].to_vec();
     write_as_md(&notes, Path::new("./out.md"))?;
     Ok(())
 }
