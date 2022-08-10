@@ -1,6 +1,5 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 
-use anyhow::Result;
 use petgraph::graph::NodeIndex;
 use petgraph::Graph;
 use serigraph::outgoing_sorter::OutGoingCycleEliminator;
@@ -39,7 +38,7 @@ fn serialize_test(c: &mut Criterion) {
     let mut group = c.benchmark_group("serialize");
     group.sample_size(10);
     // for n_nodes in [10, 50, 100] {
-    for n_nodes in [10, 20, 30, 40, 50, 100, 200, 500, 1000] {
+    for n_nodes in [10, 100] {
         group.throughput(criterion::Throughput::Elements(n_nodes));
         group.bench_with_input(
             BenchmarkId::from_parameter(n_nodes),

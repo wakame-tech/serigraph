@@ -1,16 +1,11 @@
 use anyhow::Result;
 use petgraph::graph::NodeIndex;
 use petgraph::Graph;
-use serigraph::dot_util::dump_cycles;
-use serigraph::outgoing_sorter::{
-    sorted_cycle_by_outgoings, unlink_cycle, OutGoingCycleEliminator,
-};
+use serigraph::debug::dot_util::dump_dot;
+use serigraph::outgoing_sorter::get_cycles;
+use serigraph::outgoing_sorter::OutGoingCycleEliminator;
 use serigraph::serialize::serialize;
-use serigraph::{dot_util::dump_dot, outgoing_sorter::get_cycles};
-use std::{
-    fs::{self},
-    path::Path,
-};
+use std::{fs, path::Path};
 
 fn setup_logger() -> Result<()> {
     fern::Dispatch::new()

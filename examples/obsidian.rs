@@ -2,7 +2,6 @@ use petgraph::Graph;
 use serde::{Deserialize, Serialize};
 use serigraph::{outgoing_sorter::OutGoingCycleEliminator, serialize::serialize};
 use std::{
-    cmp::min,
     collections::{HashMap, HashSet},
     fmt::Display,
     fs::OpenOptions,
@@ -17,8 +16,15 @@ use clap::Parser;
 #[derive(Parser, Debug)]
 pub struct Args {
     pub input_path: String,
-    pub index_from: usize,
-    pub index_to: usize,
+
+    #[clap(short = 'O', long)]
+    pub output_path: String,
+
+    #[clap(long)]
+    pub from: Option<usize>,
+
+    #[clap(long)]
+    pub to: Option<usize>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -27,6 +33,7 @@ pub struct Note {
     pub path: String,
     pub content: String,
     pub backlinks: Vec<Backlink>,
+    pub references: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
@@ -49,7 +56,7 @@ fn write_as_md(notes: &[&Note], path: &Path) -> Result<()> {
         .write(true)
         .open(path)?;
     for (i, note) in notes.iter().enumerate() {
-        println!("[{}] {}", i, note.title);
+        // println!("[{}] {}", i, note.title);
         f.write(format!("\n\n{}\n\n", note.content).as_bytes())?;
     }
     Ok(())
@@ -91,10 +98,9 @@ fn main() -> Result<()> {
     let mut graph = into_graph(&notes);
     let sorter: OutGoingCycleEliminator = Default::default();
     let notes = serialize(&mut graph, &sorter)?;
-    let from = args.index_from;
-    let to = min(args.index_to, notes.len());
+    let (from, to) = (args.from.unwrap_or(0), args.to.unwrap_or(notes.len()));
 
     let notes = notes[from..to].to_vec();
-    write_as_md(&notes, Path::new("./out.md"))?;
+    write_as_md(&notes, Path::new(args.output_path.as_str()))?;
     Ok(())
 }
