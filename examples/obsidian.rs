@@ -96,6 +96,16 @@ fn main() -> Result<()> {
     let notes: Vec<Note> = serde_json::from_str(&content)?;
 
     let mut graph = into_graph(&notes);
+
+    let n = graph.node_count();
+    let e = graph.edge_count();
+    println!(
+        "{} nodes, {} edges, density = {:.4}",
+        n,
+        e,
+        e as f64 / (n as f64 * (n - 1) as f64)
+    );
+
     let sorter: OutGoingCycleEliminator = Default::default();
     let notes = serialize(&mut graph, &sorter)?;
     let (from, to) = (args.from.unwrap_or(0), args.to.unwrap_or(notes.len()));

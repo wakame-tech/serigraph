@@ -63,8 +63,7 @@ fn inspect_graph<N, E>(graph: &Graph<N, E>) {
     }
 }
 
-fn main() -> Result<()> {
-    setup_logger()?;
+fn find_invalid_input() {
     let decomposer = OutGoingCycleEliminator::default();
     let mut trial = 0;
 
@@ -85,6 +84,21 @@ fn main() -> Result<()> {
             inspect_graph(&graph);
             break;
         }
+    }
+}
+
+fn bench(n_nodes: usize) {
+    let decomposer = OutGoingCycleEliminator::default();
+    let mut graph = Graph::<i64, i64>::new();
+    add_random_nodes_and_edges(&mut graph, n_nodes, 1.0);
+    serialize(&mut graph, &decomposer);
+}
+
+fn main() -> Result<()> {
+    setup_logger()?;
+    for n_nodes in [50, 100, 150, 200] {
+        dbg!(n_nodes);
+        bench(n_nodes);
     }
     Ok(())
 }

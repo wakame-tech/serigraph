@@ -2,7 +2,6 @@ use anyhow::Result;
 use petgraph::graph::NodeIndex;
 use petgraph::Graph;
 use serigraph::debug::dot_util::dump_dot;
-use serigraph::outgoing_sorter::get_cycles;
 use serigraph::outgoing_sorter::OutGoingCycleEliminator;
 use serigraph::serialize::serialize;
 use std::{fs, path::Path};
@@ -49,16 +48,6 @@ fn main() -> Result<()> {
     let mut graph = Graph::<i32, String>::from_edges(edges);
     for i in 0..graph.node_count() {
         graph[NodeIndex::new(i)] = i as i32;
-    }
-
-    for (i, cycle) in get_cycles(&graph).iter().enumerate() {
-        dbg!(cycle);
-        // unlink_cycle(&mut graph, cycle);
-        // dump_cycles(
-        //     &graph,
-        //     chain,
-        //     Path::new(format!("cycle_{}.dot", i).as_str()),
-        // )?;
     }
 
     let nodes = serialize(&mut graph, &OutGoingCycleEliminator::default())?;

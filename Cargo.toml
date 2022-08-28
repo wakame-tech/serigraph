@@ -19,7 +19,6 @@ fern = "0.6"
 [[bench]]
 name = "benchmark"
 harness = false
-features = ["html-report"]
 
 [lib]
 name = "serigraph"
