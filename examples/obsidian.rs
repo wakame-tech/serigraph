@@ -1,6 +1,6 @@
 use petgraph::Graph;
 use serde::{Deserialize, Serialize};
-use serigraph::{outgoing_sorter::OutGoingCycleEliminator, serialize::serialize};
+use serigraph::algo::{dfs_ser::DfsSerializer, GraphSerializer};
 use std::{
     collections::{HashMap, HashSet},
     fmt::Display,
@@ -92,8 +92,10 @@ fn into_graph(notes: &[Note]) -> Graph<&Note, String> {
 fn main() -> Result<()> {
     let args = Args::parse();
     let path = Path::new(&args.input_path);
+    dbg!(&path);
     let content = std::fs::read_to_string(path)?;
     let notes: Vec<Note> = serde_json::from_str(&content)?;
+    dbg!(notes.len());
 
     let mut graph = into_graph(&notes);
 
@@ -106,8 +108,8 @@ fn main() -> Result<()> {
         e as f64 / (n as f64 * (n - 1) as f64)
     );
 
-    let sorter: OutGoingCycleEliminator = Default::default();
-    let notes = serialize(&mut graph, &sorter)?;
+    let ser = DfsSerializer::default();
+    let notes = ser.serialize(&mut graph)?;
     let (from, to) = (args.from.unwrap_or(0), args.to.unwrap_or(notes.len()));
 
     let notes = notes[from..to].to_vec();

@@ -1,12 +1,5 @@
-use petgraph::{
-    algo::{kosaraju_scc, scc, tarjan_scc},
-    graph::NodeIndex,
-    Direction::Outgoing,
-    Graph,
-};
+use petgraph::{algo::kosaraju_scc, graph::NodeIndex, Direction::Outgoing, Graph};
 use std::collections::HashSet;
-
-use crate::serialize::CycleEliminator;
 
 pub struct OutGoingCycleEliminator {
     pub limit: Option<usize>,
@@ -90,31 +83,29 @@ pub fn unlink_cycle<N, E>(graph: &mut Graph<N, E>, component: &Vec<NodeIndex>) {
     graph.remove_edge(edge);
 }
 
-impl<N, E> CycleEliminator<N, E> for OutGoingCycleEliminator {
-    /// decompose cycles while there are cycles
-    // FIXME: improve
-    fn eliminate_cycles(&self, graph: &mut Graph<N, E>) {
-        let mut count = 0usize;
-        loop {
-            // let sccs = tarjan_scc(&*graph);
-            let sccs = kosaraju_scc(&*graph);
-            // log::debug!("iter: {}/{:?}, {} cycles", count, self.limit, sccs.len());
-            if sccs.len() == graph.node_count() {
+/// decompose cycles while there are cycles
+// FIXME: improve
+pub fn eliminate_cycles<N, E>(graph: &mut Graph<N, E>, limit: Option<usize>) {
+    let mut count = 0usize;
+    loop {
+        // let sccs = tarjan_scc(&*graph);
+        let sccs = kosaraju_scc(&*graph);
+        // log::debug!("iter: {}/{:?}, {} cycles", count, self.limit, sccs.len());
+        if sccs.len() == graph.node_count() {
+            break;
+        }
+
+        for component in sccs {
+            unlink_cycle(graph, &component);
+        }
+        count += 1;
+        if let Some(limit) = limit {
+            if limit < count {
                 break;
             }
-
-            for component in sccs {
-                unlink_cycle(graph, &component);
-            }
-            count += 1;
-            if let Some(limit) = self.limit {
-                if limit < count {
-                    break;
-                }
-            }
         }
-        // dbg!(count);
     }
+    // dbg!(count);
 }
 
 #[cfg(test)]
@@ -122,7 +113,7 @@ mod tests {
     use petgraph::graph::NodeIndex;
     use petgraph::Graph;
 
-    use crate::outgoing_sorter::get_cycle_chain;
+    use crate::algo::toposort_ser::outgoing_sorter::get_cycle_chain;
 
     fn to_nis(idxs: Vec<usize>) -> Vec<NodeIndex> {
         idxs.iter().map(|i| NodeIndex::new(*i)).collect::<Vec<_>>()
