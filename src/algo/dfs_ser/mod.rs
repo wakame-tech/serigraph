@@ -48,8 +48,11 @@ impl<N: Clone + Display, E> GraphSerializer<N, E> for DfsSerializer {
 pub mod tests {
     use super::DfsSerializer;
     use crate::algo::GraphSerializer;
+    use petgraph::algo::min_spanning_tree;
+    use petgraph::data::FromElements;
     use petgraph::graph::NodeIndex;
     use petgraph::Graph;
+    use ptree::graph::print_graph;
 
     #[test]
     fn test_ser() {
@@ -63,5 +66,36 @@ pub mod tests {
         let ser = DfsSerializer;
         let res = ser.serialize(&mut g).unwrap();
         dbg!(res);
+    }
+
+    fn make_g(n: usize, edges: &[(usize, usize)]) -> Graph<i32, ()> {
+        let mut g = Graph::<i32, ()>::new();
+        for i in 0..n {
+            g.add_node(i as i32);
+        }
+        for (f, t) in edges {
+            g.add_edge(NodeIndex::new(*f), NodeIndex::new(*t), ());
+        }
+        g
+    }
+
+    #[test]
+    fn test_mst() {
+        let g1 = make_g(5, &[(0, 1), (2, 0), (1, 2), (0, 3)]);
+        let res = min_spanning_tree(&g1);
+        let mst_g = Graph::<i32, ()>::from_elements(res);
+        print_graph(&mst_g, NodeIndex::new(0));
+        // 0
+        // ├─ 3
+        // └─ 1
+        //    └─ 2
+
+        let g2 = make_g(5, &[(0, 1), (1, 2), (2, 0), (0, 3)]);
+        let res = min_spanning_tree(&g2);
+        let mst_g = Graph::<i32, ()>::from_elements(res);
+        print_graph(&mst_g, NodeIndex::new(0));
+        // 0
+        // ├─ 3
+        // └─ 1
     }
 }
