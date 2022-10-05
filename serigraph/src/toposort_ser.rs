@@ -1,4 +1,3 @@
-use self::outgoing_sorter::eliminate_cycles;
 use anyhow::anyhow;
 use anyhow::Result;
 use petgraph::{
@@ -7,9 +6,9 @@ use petgraph::{
 };
 use std::fmt::Display;
 
-use super::GraphSerializer;
+use crate::outgoing_sorter::eliminate_cycles;
 
-pub mod outgoing_sorter;
+use super::GraphSerializer;
 
 #[derive(Debug)]
 pub struct ToposortSerializer {

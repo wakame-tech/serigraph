@@ -1,0 +1,22 @@
+[package]
+name = "serigraph"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+petgraph = "0.6.2"
+anyhow = "1"
+log = "0.4.17"
+ptree = {version= "0.4.0", features=["petgraph"] }
+
+[dev-dependencies]
+rand = "0.8.5"
+criterion = "0.3"
+
+[[bench]]
+name = "benchmark"
+harness = false
+
+[lib]
+name = "serigraph"
+path = "src/lib.rs"

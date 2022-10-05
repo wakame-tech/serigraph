@@ -2,11 +2,9 @@ use anyhow::Result;
 use petgraph::Graph;
 use std::fmt::Display;
 
-use crate::algo::{scc_subgraph::condensation::condensation, toposort_ser::ToposortSerializer};
+use crate::{condensation::condensation, toposort_ser::ToposortSerializer};
 
 use super::GraphSerializer;
-
-pub mod condensation;
 
 #[derive(Debug)]
 pub struct SccSubgraphSerializer;

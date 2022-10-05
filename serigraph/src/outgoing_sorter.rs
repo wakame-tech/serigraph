@@ -113,7 +113,7 @@ mod tests {
     use petgraph::graph::NodeIndex;
     use petgraph::Graph;
 
-    use crate::algo::toposort_ser::outgoing_sorter::get_cycle_chain;
+    use crate::outgoing_sorter::get_cycle_chain;
 
     fn to_nis(idxs: Vec<usize>) -> Vec<NodeIndex> {
         idxs.iter().map(|i| NodeIndex::new(*i)).collect::<Vec<_>>()

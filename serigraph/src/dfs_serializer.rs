@@ -1,4 +1,3 @@
-use petgraph::visit::DfsPostOrder;
 use petgraph::{graph::NodeIndex, Direction::Outgoing};
 use std::{
     collections::{HashSet, VecDeque},
@@ -7,7 +6,7 @@ use std::{
 
 use super::GraphSerializer;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct DfsSerializer;
 
 impl<N: Clone + Display, E> GraphSerializer<N, E> for DfsSerializer {
@@ -23,7 +22,6 @@ impl<N: Clone + Display, E> GraphSerializer<N, E> for DfsSerializer {
         let mut res: Vec<N> = vec![];
         let mut flags: HashSet<NodeIndex> = HashSet::new();
         for ni in nodes_by_ref_count {
-            println!("");
             let mut q: VecDeque<NodeIndex> = VecDeque::new();
             q.push_back(ni);
             while let Some(ni) = q.pop_front() {
@@ -38,6 +36,7 @@ impl<N: Clone + Display, E> GraphSerializer<N, E> for DfsSerializer {
                     flags.insert(ni);
                 }
             }
+            println!("")
         }
 
         Ok(res)
@@ -47,7 +46,7 @@ impl<N: Clone + Display, E> GraphSerializer<N, E> for DfsSerializer {
 #[cfg(test)]
 pub mod tests {
     use super::DfsSerializer;
-    use crate::algo::GraphSerializer;
+    use crate::GraphSerializer;
     use petgraph::algo::min_spanning_tree;
     use petgraph::data::FromElements;
     use petgraph::graph::NodeIndex;

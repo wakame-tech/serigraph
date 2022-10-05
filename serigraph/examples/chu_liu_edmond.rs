@@ -83,6 +83,8 @@ pub fn chu_liu_edmond(n: usize, edges: Vec<(usize, usize, i32)>, root: usize) ->
     res + chu_liu_edmond(cnt, n_edges, group[root])
 }
 
+fn main() {}
+
 #[cfg(test)]
 mod test {
     use super::chu_liu_edmond;
