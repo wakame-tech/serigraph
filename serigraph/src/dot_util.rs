@@ -7,6 +7,13 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
 
+fn dbg_nis(nis: &Vec<NodeIndex>) -> String {
+    nis.iter()
+        .map(|ni| ni.index().to_string())
+        .collect::<Vec<_>>()
+        .join(" -> ")
+}
+
 pub fn dump_cycles<N: Display + Default, E: Display + Clone>(
     graph: &Graph<N, E>,
     cycle_nis: Vec<NodeIndex>,

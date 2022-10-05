@@ -2,7 +2,7 @@ use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 
 use petgraph::graph::NodeIndex;
 use petgraph::Graph;
-use serigraph::outgoing_sorter::{eliminate_cycles, OutGoingCycleEliminator};
+use serigraph::outgoing_acyclifier::{eliminate_cycles, OutGoingAcyclifier};
 
 fn add_random_nodes_and_edges<N: Default, E: Default>(
     graph: &mut Graph<N, E>,
@@ -37,7 +37,7 @@ fn outgoing_sorter_test(c: &mut Criterion) {
     let mut group = c.benchmark_group("outgoing_sorter");
     group.sample_size(10);
 
-    let eliminator = OutGoingCycleEliminator::default();
+    let eliminator = OutGoingAcyclifier::default();
     // for n_nodes in [10, 50, 100] {
     for n_nodes in [100, 200, 300, 400] {
         group.throughput(criterion::Throughput::Elements(n_nodes));
@@ -60,7 +60,7 @@ fn serialize_test(c: &mut Criterion) {
     let mut group = c.benchmark_group("serialize");
     group.sample_size(10);
 
-    let eliminator = OutGoingCycleEliminator::default();
+    let eliminator = OutGoingAcyclifier::default();
     // for n_nodes in [10, 50, 100] {
     // for n_nodes in [100, 200, 300, 400] {
     for n_nodes in [500] {

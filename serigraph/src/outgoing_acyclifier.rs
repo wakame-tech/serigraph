@@ -1,21 +1,16 @@
 use petgraph::{algo::kosaraju_scc, graph::NodeIndex, Direction::Outgoing, Graph};
-use std::collections::HashSet;
+use std::{collections::HashSet, fmt::Display};
 
-pub struct OutGoingCycleEliminator {
+use crate::Acyclifier;
+
+pub struct OutGoingAcyclifier {
     pub limit: Option<usize>,
 }
 
-impl Default for OutGoingCycleEliminator {
+impl Default for OutGoingAcyclifier {
     fn default() -> Self {
-        OutGoingCycleEliminator { limit: None }
+        OutGoingAcyclifier { limit: None }
     }
-}
-
-fn dbg_nis(nis: &Vec<NodeIndex>) -> String {
-    nis.iter()
-        .map(|ni| ni.index().to_string())
-        .collect::<Vec<_>>()
-        .join(" -> ")
 }
 
 pub fn get_cycle_chain<N, E>(graph: &Graph<N, E>, cycle_set: &Vec<NodeIndex>) -> Vec<NodeIndex> {
@@ -83,29 +78,30 @@ pub fn unlink_cycle<N, E>(graph: &mut Graph<N, E>, component: &Vec<NodeIndex>) {
     graph.remove_edge(edge);
 }
 
-/// decompose cycles while there are cycles
-// FIXME: improve
-pub fn eliminate_cycles<N, E>(graph: &mut Graph<N, E>, limit: Option<usize>) {
-    let mut count = 0usize;
-    loop {
-        // let sccs = tarjan_scc(&*graph);
-        let sccs = kosaraju_scc(&*graph);
-        // log::debug!("iter: {}/{:?}, {} cycles", count, self.limit, sccs.len());
-        if sccs.len() == graph.node_count() {
-            break;
-        }
-
-        for component in sccs {
-            unlink_cycle(graph, &component);
-        }
-        count += 1;
-        if let Some(limit) = limit {
-            if limit < count {
+impl<N: Display + Clone, E> Acyclifier<N, E> for OutGoingAcyclifier {
+    /// decompose cycles while there are cycles
+    fn acyclify(&self, graph: &mut Graph<N, E>) {
+        let mut count = 0usize;
+        loop {
+            // let sccs = tarjan_scc(&*graph);
+            let sccs = kosaraju_scc(&*graph);
+            // log::debug!("iter: {}/{:?}, {} cycles", count, self.limit, sccs.len());
+            if sccs.len() == graph.node_count() {
                 break;
             }
+
+            for component in sccs {
+                unlink_cycle(graph, &component);
+            }
+            count += 1;
+            if let Some(limit) = self.limit {
+                if limit < count {
+                    break;
+                }
+            }
         }
+        // dbg!(count);
     }
-    // dbg!(count);
 }
 
 #[cfg(test)]
@@ -113,7 +109,7 @@ mod tests {
     use petgraph::graph::NodeIndex;
     use petgraph::Graph;
 
-    use crate::outgoing_sorter::get_cycle_chain;
+    use crate::outgoing_acyclifier::get_cycle_chain;
 
     fn to_nis(idxs: Vec<usize>) -> Vec<NodeIndex> {
         idxs.iter().map(|i| NodeIndex::new(*i)).collect::<Vec<_>>()
