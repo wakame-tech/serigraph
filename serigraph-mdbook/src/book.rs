@@ -1,34 +1,23 @@
-use anyhow::{anyhow, Result};
-use petgraph::algo::toposort;
+use anyhow::Result;
+use petgraph::graph::NodeIndex;
+use petgraph::Direction::Outgoing;
 use petgraph::Graph;
-use ptree::graph::print_graph;
 use serde::{Deserialize, Serialize};
 use serigraph::outgoing_acyclifier::OutGoingAcyclifier;
 use serigraph::Acyclifier;
 use std::collections::{HashMap, HashSet};
 use std::fs;
-use std::ops::Range;
 use std::{fmt::Display, fs::OpenOptions, io::Write, path::Path};
-use urlencoding::encode;
+
+#[derive(Debug)]
+pub struct MdBookConfig {
+    pub pdf: bool,
+}
 
 #[derive(Debug)]
 pub struct Book {
     pub graph: Graph<Note, String>,
     pub resources: HashMap<String, String>,
-}
-
-fn serialize<N: Clone + Display, E: Clone>(graph: &mut Graph<N, E>) -> Result<Vec<N>> {
-    let acy = OutGoingAcyclifier::default();
-    acy.acyclify(graph);
-
-    for parent in graph.node_indices() {
-        print_graph(&graph, parent)?;
-    }
-
-    let notes = toposort(&*graph, None)
-        .map_err(|e| anyhow!("{:?}", e))
-        .map(|nis| nis.iter().map(|ni| graph[*ni].clone()).collect::<Vec<_>>())?;
-    Ok(notes)
 }
 
 fn into_graph(notes: &[Note]) -> Graph<Note, String> {
@@ -46,7 +35,7 @@ fn into_graph(notes: &[Note]) -> Graph<Note, String> {
             .iter()
             .cloned()
             .collect::<HashSet<Backlink>>();
-        println!(
+        log::debug!(
             "{} -> {}",
             note.title,
             backlinks
@@ -78,8 +67,57 @@ impl Book {
         })
     }
 
-    pub fn export_as_mdbook(&mut self, path: &Path, range: Range<usize>) -> Result<()> {
-        let book_toml = r#"
+    fn generate_summary(&mut self) -> Result<String> {
+        // let notes = toposort(&self.graph, None)
+        //     .map_err(|e| anyhow!("{:?}", e))
+        //     .map(|nis| {
+        //         nis.iter()
+        //             .map(|ni| self.graph[*ni].clone())
+        //             .collect::<Vec<_>>()
+        // })?;
+        let mut visited: HashSet<NodeIndex> = HashSet::new();
+
+        // for parent in graph.node_indices() {
+        //     print_graph(&graph, parent)?;
+        // }
+
+        fn dfs(
+            summary: &mut String,
+            visited: &mut HashSet<NodeIndex>,
+            graph: &Graph<Note, String>,
+            ni: NodeIndex,
+            depth: usize,
+        ) {
+            if visited.contains(&ni) {
+                return;
+            }
+            visited.insert(ni);
+
+            let note = &graph[ni];
+            let link = note.title.replace(" ", "%20");
+            let indent = String::from_iter(vec!['\t'; depth]);
+            *summary += format!("{}- [{}](./{}.md)\n", indent, note.title, link).as_str();
+
+            for next in graph.neighbors_directed(ni, Outgoing) {
+                dfs(summary, visited, graph, next, depth + 1);
+            }
+        }
+
+        let mut summary = String::new();
+        summary += "# Summary\n";
+
+        for ni in self.graph.node_indices() {
+            dfs(&mut summary, &mut visited, &self.graph, ni, 0);
+        }
+        Ok(summary)
+    }
+
+    pub fn export_as_mdbook(&mut self, path: &Path, config: &MdBookConfig) -> Result<()> {
+        let acy = OutGoingAcyclifier::default();
+        acy.acyclify(&mut self.graph);
+
+        let mut book_toml = String::new();
+        book_toml += r#"
 [book]
 authors = ["author"]
 language = "ja"
@@ -87,11 +125,12 @@ multilingual = false
 src = "src"
 title = "vault-book"
 [output.html]
-mathjax-support = true
-[output.pdf]
-        "#;
-
-        let notes = serialize(&mut self.graph)?[range].to_vec();
+[output.katex]
+[preprocessor.katex]
+"#;
+        if config.pdf {
+            book_toml += "[output.pdf]\n";
+        }
 
         // make dirs
         if path.exists() {
@@ -131,24 +170,9 @@ mathjax-support = true
             .open(path.join("book.toml"))?;
         f.write(format!("{}", book_toml).as_bytes())?;
 
-        // SUMMARY.md
-        let summary_path = src_path.join("SUMMARY.md");
-        let mut summary = String::new();
-        summary += "# Summary\n";
-
-        for note in notes.iter() {
-            let link = note.title.replace(" ", "%20");
-            summary += format!("- [{}](./{}.md)\n", note.title, link).as_str();
-        }
-        let mut f = OpenOptions::new()
-            .create(true)
-            .truncate(true)
-            .write(true)
-            .open(summary_path)?;
-        f.write(format!("{}", summary).as_bytes())?;
-
         // src/*.md
-        for note in notes.iter() {
+        for ni in self.graph.node_indices() {
+            let note = &self.graph[ni];
             let mut f = OpenOptions::new()
                 .create(true)
                 .truncate(true)
@@ -156,6 +180,19 @@ mathjax-support = true
                 .open(src_path.join(format!("{}.md", note.title).as_str()))?;
             f.write(format!("{}", note.content).as_bytes())?;
         }
+
+        // SUMMARY.md
+        let summary_path = src_path.join("SUMMARY.md");
+        let summary = self.generate_summary()?;
+        println!("{}", summary);
+        let mut f = OpenOptions::new()
+            .create(true)
+            .truncate(true)
+            .write(true)
+            .open(summary_path)?;
+        f.write(format!("{}", summary).as_bytes())?;
+
+        println!("exported\n{}", self);
         Ok(())
     }
 }
